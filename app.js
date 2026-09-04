@@ -24,7 +24,7 @@
 
 const DATA_SOURCE = "supabase";           // "supabase" | "json"
 
-const SUPABASE_URL = "https://zyoriesorhihnecosqwv.supabase.co";
+const SUPABASE_URL = "https://zyoriesorhihnecosqwv.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "sb_publishable_-XaLq_WFCj01VmsdDCiHOw_2_570tq4";
 
 // Alias que traducen las columnas snake_case de Postgres a los
