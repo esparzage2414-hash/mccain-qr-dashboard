@@ -24,8 +24,8 @@
 
 const DATA_SOURCE = "supabase";           // "supabase" | "json"
 
-const SUPABASE_URL = "https://zyoriesorhihnecosqwv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-XaLq_WFCj01VmsdDCiHOw_2_570tq4";
+const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY_PUBLICA";
 
 // Alias que traducen las columnas snake_case de Postgres a los
 // mismos nombres camelCase que ya usa el resto de este archivo.
@@ -213,11 +213,12 @@ function renderDashboardData(order) {
   setEvidenceChip(evApertura, order.horaAperturaCaja);
   setEvidenceChip(evTemp, order.temperaturaApertura !== null ? fmtTemp(order.temperaturaApertura) : null);
 
-  // Resalta si la temperatura de apertura se sale del rango pactado
+  // Resalta si la temperatura de apertura se pasó del máximo permitido
+  // (más fría de lo requerido no se marca como alerta: para producto
+  // congelado, estar por debajo del mínimo no representa el mismo riesgo).
   evTemp.classList.remove("is-alert");
   if (order.temperaturaApertura !== null && order.temperaturaApertura !== undefined) {
-    const fuera = order.temperaturaApertura > order.temperaturaRequeridaMax ||
-                  order.temperaturaApertura < order.temperaturaRequeridaMin;
+    const fuera = order.temperaturaApertura > order.temperaturaRequeridaMax;
     if (fuera) evTemp.classList.add("is-alert");
   }
 }
@@ -259,10 +260,10 @@ function buildChart(order) {
   const dataSup = readings.map(r => ({ x: r.fechaHora, y: r.limiteSuperior }));
   const dataInf = readings.map(r => ({ x: r.fechaHora, y: r.limiteInferior }));
 
-  // Colorea puntos fuera de rango en rojo de alerta
+  // Colorea en rojo de alerta solo cuando sube por encima del límite superior.
+  // Estar por debajo del límite inferior (más frío) no se marca como alerta.
   const pointColors = readings.map(r =>
-    (r.temperaturaReal > r.limiteSuperior || r.temperaturaReal < r.limiteInferior)
-      ? colorAlert : colorAccent
+    r.temperaturaReal > r.limiteSuperior ? colorAlert : colorAccent
   );
 
   if (tempChartInstance) tempChartInstance.destroy();
@@ -303,7 +304,7 @@ function buildChart(order) {
           tension: 0,
         },
         {
-          label: "Límite inferior de alerta",
+          label: "Mínimo requerido (referencia)",
           data: dataInf,
           borderColor: colorAlert,
           borderDash: [2, 3],
@@ -359,9 +360,8 @@ function buildChart(order) {
     },
   });
 
-  // Banner de alerta si hubo excursión de temperatura en la ventana visible
-  const huboExcursion = readings.some(r =>
-    r.temperaturaReal > r.limiteSuperior || r.temperaturaReal < r.limiteInferior);
+  // Banner de alerta si hubo temperatura por encima del límite en la ventana visible
+  const huboExcursion = readings.some(r => r.temperaturaReal > r.limiteSuperior);
   const banner = document.getElementById("chartAlertBanner");
   banner.hidden = !huboExcursion;
 }
